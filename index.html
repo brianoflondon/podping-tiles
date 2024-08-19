@@ -30,9 +30,13 @@ Powered by the Hive Blockchain and Podcasting 2.0">
 <body>
     <div class="fixed-footer">
         <strong>
-            Podping running on the Hive Blockchain
+            <span class="large-text">
+                <a href="https://podping.org" target="_blank">Podping</a>
+                running on the
+                <a href="https://hiveblocks.io" target="_blank">Hive Blockchain</a>
+            </span>
+            <button class="fancy-button" id="playPauseButton" onclick="togglePlayPause()">||</button>
         </strong>
-        <button class="fancy-button" id="playPauseButton" onclick="togglePlayPause()">Pause</button>
     </div>
     <script>
         const V4V_PROXY = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -128,7 +132,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
 
         const togglePlayPause = () => {
             isPaused = !isPaused;
-            document.getElementById('playPauseButton').innerText = isPaused ? 'Play' : 'Pause';
+            document.getElementById('playPauseButton').innerText = isPaused ? '▶' : '||';
         };
 
         // main loop

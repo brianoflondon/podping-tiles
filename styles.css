@@ -35,15 +35,19 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); /* Optional: Add shadow for better visibility */
 }
 
+.large-text {
+    font-size: 24px;
+}
+
 .fancy-button {
     /* Basic button styling */
-    padding: 10px 20px;
+    padding: 5px 10px;
     font-size: 16px;
     -align: center;
     cursor: pointer;
     outline: none;
     color: #fff;
-    background-color: #4CAF50;
+    background-color: #d41818;
     border: none;
     border-radius: 15px;
     box-shadow: 0 5px #999;
