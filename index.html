@@ -29,8 +29,10 @@ Powered by the Hive Blockchain and Podcasting 2.0">
 
 <body>
     <div class="fixed-footer">
-        <h2>Podping Podcasts on Hive</h2>
-        <!-- <button id="playPauseButton" onclick="togglePlayPause()">Pause</button> -->
+        <strong>
+            Podping running on the Hive Blockchain
+        </strong>
+        <button class="fancy-button" id="playPauseButton" onclick="togglePlayPause()">Pause</button>
     </div>
     <script>
         const V4V_PROXY = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -66,8 +68,6 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                 }
 
                 const irisArray = custom_json_body.iris;
-                // print length of iris array
-                console.log(irisArray.length);
                 for (const feedUrl of irisArray) {
                     const proxiedUrl = encodeURIComponent('podcasts/byfeedurl?url=' + feedUrl + '&client_app=podping-tiles');
 
@@ -119,7 +119,6 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                                 console.log('removing image')
                             }
                         }
-                        console.log('imageCount: ' + imageCount);
                     } catch (error) {
                         console.error(error.message);
                     }
@@ -147,6 +146,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             // stream forever
             for await (const op of client.blockchain.getOperations()) {
                 if (isPaused) {
+                    console.log('paused');
                     await new Promise(resolve => {
                         const interval = setInterval(() => {
                             if (!isPaused) {
@@ -155,6 +155,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                             }
                         }, 100);
                     });
+                    console.log('resumed');
                 }
                 const ops = [op];
                 const pp_ops = ops.filter(podPingOpsFilter);
