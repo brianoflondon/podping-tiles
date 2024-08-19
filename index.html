@@ -116,15 +116,21 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                         imageCount++;
                         if (imageCount > imageLimit) {
                             const oldestImage = imageContainer.querySelector('a:last-child');
-                            console.log('oldestImage: ' + oldestImage);
                             if (oldestImage) {
                                 imageContainer.removeChild(oldestImage);
                                 imageCount--;
-                                console.log('removing image')
                             }
                         }
                     } catch (error) {
-                        console.error(error.message);
+                        console.log(error.message);
+                        // if error is rate limit then pause for 10 seconds
+                        isPaused = true;
+                        document.getElementById('playPauseButton').innerText = '▶';
+                        console.log('rate limit hit, pausing for 45 seconds');
+                        await new Promise(resolve => setTimeout(resolve, 45000));
+                        console.log('resuming');
+                        isPaused = false;
+                        document.getElementById('playPauseButton').innerText = '||';
                     }
                 }
             }
