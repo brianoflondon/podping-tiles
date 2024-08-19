@@ -37,8 +37,7 @@
                 }
 
                 const irisArray = custom_json_body.iris;
-                // print length of iris array
-                console.log(irisArray.length);
+
                 for (const feedUrl of irisArray) {
                     const proxiedUrl = encodeURIComponent('podcasts/byfeedurl?url=' + feedUrl);
 
@@ -52,6 +51,7 @@
                     // Add random delay between 0.1 to 1.1 seconds
                     const delayIntervals = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500];
                     const delay = delayIntervals[Math.floor(Math.random() * delayIntervals.length)];
+                    console.log('Delay:', delay, 'iris count:', irisArray.length);
                     await new Promise(resolve => setTimeout(resolve, delay));
 
                     try {
