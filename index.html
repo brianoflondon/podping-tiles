@@ -50,7 +50,8 @@
                     };
 
                     // Add random delay between 0.1 to 1.1 seconds
-                    const delay = Math.random() * 1000 + 100;
+                    const delayIntervals = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500];
+                    const delay = delayIntervals[Math.floor(Math.random() * delayIntervals.length)];
                     await new Promise(resolve => setTimeout(resolve, delay));
 
                     try {
