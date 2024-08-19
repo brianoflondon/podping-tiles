@@ -5,13 +5,13 @@
     <link rel="stylesheet" type="text/css" href="styles.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Podping Podcasts on Hive</title>
+    <title>Podping on Hive</title>
 
     <!-- Favicon -->
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Podping Podcasts on Hive">
+    <meta property="og:title" content="Podping on Hive">
     <meta property="og:description" content="Visualize a non stop stream of podcasts updating.
 Powered by the Hive Blockchain and Podcasting 2.0">
     <meta property="og:image" content="/podping-tiles-screenshot.jpg">
@@ -20,7 +20,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
 
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Podping Podcasts on Hive">
+    <meta name="twitter:title" content="Podping on Hive">
     <meta name="twitter:description" content="Visualize a non stop stream of podcasts updating.
 Powered by the Hive Blockchain and Podcasting 2.0">
     <meta name="twitter:image" content="podping-tiles-screenshot.jpg">
@@ -124,13 +124,15 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                     } catch (error) {
                         console.log(error.message);
                         // if error is rate limit then pause for 10 seconds
-                        isPaused = true;
-                        document.getElementById('playPauseButton').innerText = '▶';
-                        console.log('rate limit hit, pausing for 45 seconds');
-                        await new Promise(resolve => setTimeout(resolve, 45000));
-                        console.log('resuming');
-                        isPaused = false;
-                        document.getElementById('playPauseButton').innerText = '||';
+                        if (error.message.includes('429')) {
+                            isPaused = true;
+                            document.getElementById('playPauseButton').innerText = '▶';
+                            console.log('rate limit hit, pausing for 45 seconds');
+                            await new Promise(resolve => setTimeout(resolve, 45000));
+                            console.log('resuming');
+                            isPaused = false;
+                            document.getElementById('playPauseButton').innerText = '||';
+                        }
                     }
                 }
             }
