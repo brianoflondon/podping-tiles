@@ -30,7 +30,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
 <body>
     <div class="fixed-footer">
         <h2>Podping Podcasts on Hive</h2>
-        <button id="playPauseButton" onclick="togglePlayPause()">Pause</button>
+        <!-- <button id="playPauseButton" onclick="togglePlayPause()">Pause</button> -->
     </div>
     <script>
         const V4V_PROXY = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
@@ -146,6 +146,16 @@ Powered by the Hive Blockchain and Podcasting 2.0">
 
             // stream forever
             for await (const op of client.blockchain.getOperations()) {
+                if (isPaused) {
+                    await new Promise(resolve => {
+                        const interval = setInterval(() => {
+                            if (!isPaused) {
+                                clearInterval(interval);
+                                resolve();
+                            }
+                        }, 100);
+                    });
+                }
                 const ops = [op];
                 const pp_ops = ops.filter(podPingOpsFilter);
                 handlePodPingOps(pp_ops);
