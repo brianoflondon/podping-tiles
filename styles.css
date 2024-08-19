@@ -3,6 +3,13 @@
     100% { opacity: 1; }
 }
 
+@font-face {
+    font-family: 'Jersey10';
+    src: url('fonts/Jersey_10/Jersey10-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 img {
     /* border: 2px solid black; */
     animation: fadeIn 3s;
@@ -12,6 +19,7 @@ img {
 }
 
 body {
+    font-family: 'Jersey10', sans-serif;
     margin: 0;
     padding-bottom: 60px; /* Adjust this value based on the height of your header */
 }
