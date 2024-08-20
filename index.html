@@ -36,6 +36,9 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                 <a href="https://hive.io" target="_blank">Hive Blockchain</a>
             </span>
             <button class="fancy-button" id="playPauseButton" onclick="togglePlayPause()">||</button>
+            <span id="blockNumberText" class="small-text">
+                Block Number
+            </span>
         </strong>
     </div>
     <script>
@@ -60,6 +63,8 @@ Powered by the Hive Blockchain and Podcasting 2.0">
 
         const handlePodPingOps = async (ops) => {
             for (const op of ops) {
+                updateBlockNumber(op.block);
+                await waitForResume();
                 let custom_json_body = '';
                 try {
                     custom_json_body = JSON.parse(op.op[1].json);
@@ -143,6 +148,36 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             document.getElementById('playPauseButton').innerText = isPaused ? '▶' : '||';
         };
 
+        function updateBlockNumber(blockNumber) {
+            // block number link: https://hivehub.dev/b/88198226
+            const blockNumberLink = `https://hivehub.dev/b/${blockNumber}`;
+            var blockNumberAnchor = document.createElement("a");
+            blockNumberAnchor.setAttribute('href', blockNumberLink);
+            blockNumberAnchor.setAttribute('target', '_blank');
+            blockNumberAnchor.innerText = `Block Number: ${blockNumber}`;
+            document.getElementById('blockNumberText').innerHTML = '';
+            document.getElementById('blockNumberText').appendChild(blockNumberAnchor);
+
+
+            // document.getElementById('blockNumberText').innerText = `Block Number: ${blockNumber}`;
+        }
+
+        async function waitForResume() {
+            if (isPaused) {
+                console.log('paused');
+                await new Promise(resolve => {
+                    const interval = setInterval(() => {
+                        if (!isPaused) {
+                            clearInterval(interval);
+                            resolve();
+                        }
+                    }, 100);
+                });
+                console.log('resumed');
+            }
+        }
+
+
         // main loop
         (async function () {
             // get head block number
@@ -157,18 +192,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
 
             // stream forever
             for await (const op of client.blockchain.getOperations()) {
-                if (isPaused) {
-                    console.log('paused');
-                    await new Promise(resolve => {
-                        const interval = setInterval(() => {
-                            if (!isPaused) {
-                                clearInterval(interval);
-                                resolve();
-                            }
-                        }, 100);
-                    });
-                    console.log('resumed');
-                }
+                await waitForResume();
                 const ops = [op];
                 const pp_ops = ops.filter(podPingOpsFilter);
                 handlePodPingOps(pp_ops);
