@@ -41,6 +41,9 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             <span id="blockNumberText" class="small-text">
                 Block Number
             </span>
+            <span id="podpingCountText" class="small-text">
+                Podpings: 0 Podcasts: 0
+            </span>
         </strong>
     </div>
     <script>
@@ -53,6 +56,8 @@ Powered by the Hive Blockchain and Podcasting 2.0">
         let isPaused = false;
         const imageLimit = 50;
         let imageCount = 0;
+        let podpingCount = 0;
+        let podcastCount = 0;
         const imageContainer = document.createElement('div');
         document.body.appendChild(imageContainer);
 
@@ -60,6 +65,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             if (op.op[0] != 'custom_json' || !op.op[1].id || !op.op[1].id.startsWith('pp_')) {
                 return false;
             }
+            podpingCount++;
             return true;
         }
 
@@ -88,7 +94,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                             "Content-Type": "application/xml"
                         }
                     };
-
+                    podcastCount++;
                     // Add random delay between 0 and 3 seconds in 0.5-second intervals
                     const delayIntervals = [0, 500, 1000, 1500, 2000, 2500, 3000];
                     const delay = delayIntervals[Math.floor(Math.random() * delayIntervals.length)];
@@ -159,7 +165,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             blockNumberAnchor.innerText = `Block Number: ${blockNumber}`;
             document.getElementById('blockNumberText').innerHTML = '';
             document.getElementById('blockNumberText').appendChild(blockNumberAnchor);
-
+            document.getElementById('podpingCountText').innerText = `Podpings: ${podpingCount} Podcasts: ${podcastCount}`;
 
             // document.getElementById('blockNumberText').innerText = `Block Number: ${blockNumber}`;
         }
