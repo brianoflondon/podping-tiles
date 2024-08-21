@@ -61,7 +61,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
         const V4V_PROXY = V4V_API + '/pi/?client_app=podping_tiles&call=';
 
         var client = new dhive.Client(["https://api.deathwing.me", "https://api.hive.blog", "https://hive-api.arcange.eu", "https://api.openhive.network", "https://techcoderx.com", "https://hive-api.3speak.tv", "https://hiveapi.actifit.io", "https://rpc.mahdiyari.info"]);
-        checkApi();
+        checkApi("startup");
 
         let isPaused = false;
         const imageLimit = 50;
@@ -165,7 +165,17 @@ Powered by the Hive Blockchain and Podcasting 2.0">
         const togglePlayPause = () => {
             isPaused = !isPaused;
             document.getElementById('playPauseButton').innerText = isPaused ? '▶' : '||';
-            checkApi();
+            if (!isPaused) {
+                checkApi("resume");
+                // change class of button to show it is paused
+                document.getElementById('playPauseButton').classList.remove('paused');
+            } else {
+                checkApi("pause");
+                // change class of button to show it is playing
+                document.getElementById('playPauseButton').classList.add('paused');
+
+            }
+            checkApi("togglePlayPause");
         };
 
         function updateBlockNumber(blockNumber) {
@@ -184,8 +194,8 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             // document.getElementById('blockNumberText').innerText = `Block Number: ${blockNumber}`;
         }
 
-        function checkApi() {
-            fetch(V4V_API + '?get_crypto=false&tiles_podping=true')
+        function checkApi(action = "") {
+            fetch(V4V_API + '?get_crypto=false&tiles_podping=true&action=' + action)
                 .then(response => response.json())
                 .then(data => console.log(data))
                 .catch(error => console.error(error));
