@@ -54,11 +54,14 @@ Powered by the Hive Blockchain and Podcasting 2.0">
         </strong>
     </div>
     <script>
-        const V4V_PROXY = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-            ? 'http://localhost:1818/v1/pi/?client_app=podping_tiles&call='
-            : 'https://devapi.v4v.app/v1/pi/?client_app=podping_tiles&call=';
+        const V4V_API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://localhost:1818/v1'
+            : 'https://devapi.v4v.app/v1';
+
+        const V4V_PROXY = V4V_API + '/pi/?client_app=podping_tiles&call=';
 
         var client = new dhive.Client(["https://api.deathwing.me", "https://api.hive.blog", "https://hive-api.arcange.eu", "https://api.openhive.network", "https://techcoderx.com", "https://hive-api.3speak.tv", "https://hiveapi.actifit.io", "https://rpc.mahdiyari.info"]);
+        checkApi();
 
         let isPaused = false;
         const imageLimit = 50;
@@ -162,6 +165,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
         const togglePlayPause = () => {
             isPaused = !isPaused;
             document.getElementById('playPauseButton').innerText = isPaused ? '▶' : '||';
+            checkApi();
         };
 
         function updateBlockNumber(blockNumber) {
@@ -178,6 +182,13 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             let podpingsPerMinute = podpingCount / (elapsedTime / 60000);
             document.getElementById('podpingCountText').innerText = `Podpings: ${podpingCount} Podcasts: ${podcastCount} Podpings/Min: ${podpingsPerMinute.toFixed(0)}`;
             // document.getElementById('blockNumberText').innerText = `Block Number: ${blockNumber}`;
+        }
+
+        function checkApi() {
+            fetch(V4V_API + '?get_crypto=false&tiles_podping=true')
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(error => console.error(error));
         }
 
         async function waitForResume() {
