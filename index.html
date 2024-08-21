@@ -146,17 +146,12 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                             }
                         }
                     } catch (error) {
-                        console.log(error.message);
-                        // if error is rate limit then pause for 10 seconds
-                        if (error.message.includes('429')) {
-                            isPaused = true;
-                            document.getElementById('playPauseButton').innerText = '▶';
-                            console.log('rate limit hit, pausing for 45 seconds');
-                            await new Promise(resolve => setTimeout(resolve, 45000));
-                            console.log('resuming');
-                            isPaused = false;
-                            document.getElementById('playPauseButton').innerText = '||';
-                        }
+                        console.log('Rate limit exceeded. Pausing for 60 seconds.');
+                        await new Promise(resolve => setTimeout(resolve, 60000));
+
+                        // // if error is rate limit then pause for 10 seconds
+                        // if (error.message.includes('429')) {
+                        // }
                     }
                 }
             }
@@ -175,7 +170,6 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                 document.getElementById('playPauseButton').classList.add('paused');
 
             }
-            checkApi("togglePlayPause");
         };
 
         function updateBlockNumber(blockNumber) {
@@ -198,7 +192,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             fetch(V4V_API + '?get_crypto=false&tiles_podping=true&action=' + action)
                 .then(response => response.json())
                 .then(data => console.log(data))
-                .catch(error => console.error(error));
+                .catch(error => console.log(error));
         }
 
         async function waitForResume() {
