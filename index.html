@@ -38,11 +38,18 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                 <a href="https://hive.io" target="_blank">Hive Blockchain</a>
             </span>
             <button class="fancy-button" id="playPauseButton" onclick="togglePlayPause()">||</button>
+            <br>
+            <span>❇️ </span>
             <span id="blockNumberText" class="small-text">
                 Block Number
             </span>
+            <span>❇️ </span>
             <span id="podpingCountText" class="small-text">
                 Podpings: 0 Podcasts: 0
+            </span>
+            <br>
+            <span>
+                ❇️ Running Time: <span id="runningTime">0</span>
             </span>
         </strong>
     </div>
@@ -58,6 +65,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
         let imageCount = 0;
         let podpingCount = 0;
         let podcastCount = 0;
+        let startTime = Date.now();
         const imageContainer = document.createElement('div');
         document.body.appendChild(imageContainer);
 
@@ -165,8 +173,10 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             blockNumberAnchor.innerText = `Block Number: ${blockNumber}`;
             document.getElementById('blockNumberText').innerHTML = '';
             document.getElementById('blockNumberText').appendChild(blockNumberAnchor);
-            document.getElementById('podpingCountText').innerText = `Podpings: ${podpingCount} Podcasts: ${podcastCount}`;
-
+            let elapsedTime = Date.now() - startTime;
+            document.getElementById('runningTime').innerText = formatElapsedTime(elapsedTime);
+            let podpingsPerMinute = podpingCount / (elapsedTime / 60000);
+            document.getElementById('podpingCountText').innerText = `Podpings: ${podpingCount} Podcasts: ${podcastCount} Podpings/Min: ${podpingsPerMinute.toFixed(0)}`;
             // document.getElementById('blockNumberText').innerText = `Block Number: ${blockNumber}`;
         }
 
@@ -183,6 +193,18 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                 });
                 console.log('resumed');
             }
+        }
+
+        function formatElapsedTime(elapsedTime) {
+            const hours = Math.floor(elapsedTime / 3600000);
+            const minutes = Math.floor((elapsedTime % 3600000) / 60000);
+            const seconds = Math.floor((elapsedTime % 60000) / 1000);
+
+            const formattedHours = String(hours).padStart(2, '0');
+            const formattedMinutes = String(minutes).padStart(2, '0');
+            const formattedSeconds = String(seconds).padStart(2, '0');
+
+            return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
         }
 
 
