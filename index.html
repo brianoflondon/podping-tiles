@@ -121,17 +121,25 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                         const imageUrl = data.feed.artwork;
                         const feedTitle = data.feed.title;
                         const feedLink = data.feed.link; // Extract the link
+                        const itunesId = data.feed.itunesId;
 
                         if (!imageUrl || typeof imageUrl === 'undefined') {
                             continue;
                         }
                         var newImg = document.createElement("img");
                         newImg.setAttribute('src', imageUrl);
-                        newImg.setAttribute('alt', feedTitle);
+                        const altText = itunesId ? `${feedTitle} (episodes.fm link)` : feedTitle;
+                        console.log(altText);
+                        newImg.setAttribute('alt', altText);
                         newImg.setAttribute('title', feedTitle);
 
                         var anchor = document.createElement("a");
-                        anchor.setAttribute('href', feedLink); // Set the link
+                        if (itunesId) {
+                            anchor.setAttribute('href', `https://episodes.fm/${itunesId}`);
+                        } else {
+                            anchor.setAttribute('href', feedLink); // Set the link
+                        }
+
                         anchor.setAttribute('target', '_blank'); // Open link in a new tab
                         anchor.appendChild(newImg);
                         imageContainer.insertBefore(anchor, imageContainer.firstChild);
