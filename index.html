@@ -31,32 +31,43 @@ Powered by the Hive Blockchain and Podcasting 2.0">
 
 <body>
     <div class="fixed-footer">
-        <strong>
-            <span class="large-text">
-                <a href="https://podping.org" target="_blank">Podping</a>
-                running on the
-                <a href="https://hive.io" target="_blank">Hive Blockchain</a>
+        <div class="left-content">
+            <strong>
+                <span class="large-text">
+                    <a href="https://podping.org" target="_blank">Podping</a>
+                    running on the
+                    <a href="https://hive.io" target="_blank">Hive Blockchain</a>
+                </span>
+                <button class="fancy-button" id="playPauseButton" onclick="togglePlayPause()">||</button>
+                <br>
+                <span>❇️ </span>
+                <span id="blockNumberText" class="small-text">
+                    Block Number
+                </span>
+                <span>❇️ </span>
+                <span id="podpingCountText" class="small-text">
+                    Podpings: 0 Podcasts: 0
+                </span>
+                <br>
+                <span>
+                    ❇️ Running Time: <span id="runningTime">0</span>
+                </span>
+            </strong>
+        </div>
+        <div class="right-content">
+            <span class="latest-podping">
+                <label for="showRawContentSwitch">Show Raw Podping</label>
+                <input type="checkbox" id="showRawContentSwitch" onclick="toggleRawContent()">
             </span>
-            <button class="fancy-button" id="playPauseButton" onclick="togglePlayPause()">||</button>
-            <br>
-            <span>❇️ </span>
-            <span id="blockNumberText" class="small-text">
-                Block Number
-            </span>
-            <span>❇️ </span>
-            <span id="podpingCountText" class="small-text">
-                Podpings: 0 Podcasts: 0
-            </span>
-            <br>
-            <span>
-                ❇️ Running Time: <span id="runningTime">0</span>
-            </span>
-        </strong>
+            <div id="latestPodping" class="latest-podping" style="display: none;"></div>
+        </div>
     </div>
     <script>
-        const V4V_API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        const localDev = false;
+        const V4V_API = localDev && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
             ? 'http://localhost:1818/v1'
             : 'https://devapi.v4v.app/v1';
+
 
         const V4V_PROXY = V4V_API + '/pi/?client_app=podping_tiles&call=';
 
@@ -68,7 +79,11 @@ Powered by the Hive Blockchain and Podcasting 2.0">
         let imageCount = 0;
         let podpingCount = 0;
         let podcastCount = 0;
-        let startTime = Date.now();
+        let blockNumber = 0;
+        let custom_json_body = '';
+        let startTime = Date.now() - 60000;
+
+        let showRawPodping = true
         const imageContainer = document.createElement('div');
         document.body.appendChild(imageContainer);
 
@@ -82,11 +97,14 @@ Powered by the Hive Blockchain and Podcasting 2.0">
 
         const handlePodPingOps = async (ops) => {
             for (const op of ops) {
-                updateBlockNumber(op.block);
+                blockNumber = op.block;
                 await waitForResume();
-                let custom_json_body = '';
                 try {
                     custom_json_body = JSON.parse(op.op[1].json);
+                    if (showRawPodping) {
+                        // display raw text of podping
+                        document.getElementById('latestPodping').innerText = JSON.stringify(op.op[1], null, 2);
+                    }
                 } catch (error) {
                     console.error("invalid JSON");
                 }
@@ -94,6 +112,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                 if (!custom_json_body.iris) {
                     continue;
                 }
+                updateFooterText();
 
                 const irisArray = custom_json_body.iris;
                 for (const feedUrl of irisArray) {
@@ -106,10 +125,8 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                         }
                     };
                     podcastCount++;
-                    // Add random delay between 0 and 3 seconds in 0.5-second intervals
-                    const delayIntervals = [0, 500, 1000, 1500, 2000, 2500, 3000];
-                    const delay = delayIntervals[Math.floor(Math.random() * delayIntervals.length)];
-                    await new Promise(resolve => setTimeout(resolve, delay));
+
+                    await randomDelay();
 
                     try {
                         const response = await fetch(V4V_PROXY + proxiedUrl, opts);
@@ -118,6 +135,8 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                         }
 
                         const data = await response.json();
+                        console.log("Hive Podping data", custom_json_body);
+                        console.log("Podcast Index data", data.feed);
                         const imageUrl = data.feed.artwork;
                         const feedTitle = data.feed.title;
                         const feedLink = data.feed.link; // Extract the link
@@ -132,6 +151,14 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                         console.log(altText);
                         newImg.setAttribute('alt', altText);
                         newImg.setAttribute('title', feedTitle);
+
+                        // Episodes.fm Link with base64url encoded feedUrl
+                        // Waiting for implementation of episodes.fm
+                        // const b64url = base64urlEncode(feedUrl);
+                        // console.log(feedUrl);
+                        // console.log(`https://episodes.fm/${b64url}`);
+                        // console.log(`https://episodes.fm/${itunesId}`);
+
 
                         var anchor = document.createElement("a");
                         if (itunesId) {
@@ -180,7 +207,17 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             }
         };
 
-        function updateBlockNumber(blockNumber) {
+        function toggleRawContent() {
+            const latestPodping = document.getElementById('latestPodping');
+            const showRawContentSwitch = document.getElementById('showRawContentSwitch');
+            if (showRawContentSwitch.checked) {
+                latestPodping.style.display = 'block';
+            } else {
+                latestPodping.style.display = 'none';
+            }
+        }
+
+        function updateFooterText() {
             // block number link: https://hivehub.dev/b/88198226
             const blockNumberLink = `https://hivehub.dev/b/${blockNumber}`;
             var blockNumberAnchor = document.createElement("a");
@@ -193,6 +230,7 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             document.getElementById('runningTime').innerText = formatElapsedTime(elapsedTime);
             let podpingsPerMinute = podpingCount / (elapsedTime / 60000);
             document.getElementById('podpingCountText').innerText = `Podpings: ${podpingCount} Podcasts: ${podcastCount} Podpings/Min: ${podpingsPerMinute.toFixed(0)}`;
+
             // document.getElementById('blockNumberText').innerText = `Block Number: ${blockNumber}`;
         }
 
@@ -229,6 +267,28 @@ Powered by the Hive Blockchain and Podcasting 2.0">
 
             return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
         }
+
+        async function randomDelay() {
+            // Add random delay between 0 and 3 seconds in 0.5-second intervals
+            const delayIntervals = [0, 500, 1000, 1500, 2000, 2500, 3000];
+            const delay = delayIntervals[Math.floor(Math.random() * delayIntervals.length)];
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+
+        // Functionality to encode RSS URL to base64url for use with episodes.fm
+        const BASE64URL_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+        const PAD_CHAR = '=';
+
+        // Function to encode a string or buffer to base64url needed for episodes.fm
+        function base64urlEncode(data) {
+            let str = (data instanceof Uint8Array) ? String.fromCharCode.apply(null, data) : data;
+            let base64 = btoa(str);
+            // Convert to base64url
+            return base64.replace(/\+/g, '-') // Replace '+' with '-'
+                .replace(/\//g, '_') // Replace '/' with '_'
+                .replace(/=+$/, ''); // Remove any trailing '='
+        }
+
 
 
         // main loop

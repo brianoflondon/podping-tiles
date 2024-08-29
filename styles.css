@@ -31,6 +31,7 @@ body {
 }
 
 .fixed-footer {
+    display: flex;
     position: fixed;
     bottom: 0;
     width: 100%;
@@ -40,6 +41,45 @@ body {
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); /* Optional: Add shadow for better visibility */
 }
+
+.left-content {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 59%;
+    /* Take up 80% of the width */
+}
+
+.right-content {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 35%;
+    /* Take up 20% of the width */
+
+}
+
+.latest-podping {
+    white-space: pre-wrap;
+    /* Preserve whitespace and line breaks */
+    font-family: monospace;
+    /* Use a monospace font for better readability */
+    background-color: #f5f5f5;
+    /* Light grey background for contrast */
+    padding: 5px;
+    /* Padding for better spacing */
+    border: 1px solid #ddd;
+    /* Light border for definition */
+    border-radius: 4px;
+    /* Rounded corners for aesthetics */
+    overflow-x: auto;
+    /* Horizontal scroll for long lines */
+    font-size: 0.5rem;
+    /* Smaller font size for better readability */
+    text-align: left;
+    display: flex;
+    align-items: center;
+}
+
+
 
 .large-text {
     font-size: 24px;
