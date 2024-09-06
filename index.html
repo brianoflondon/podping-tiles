@@ -82,6 +82,12 @@ Powered by the Hive Blockchain and Podcasting 2.0">
         let blockNumber = 0;
         let custom_json_body = '';
         let startTime = Date.now() - 60000;
+        const isMobileNow = isMobile();
+        if (isMobileNow) {
+            console.log("Mobile device detected");
+        } else {
+            console.log("Desktop device detected");
+        }
 
         let showRawPodping = true
         const imageContainer = document.createElement('div');
@@ -135,8 +141,10 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                         }
 
                         const data = await response.json();
-                        console.log("Hive Podping data", custom_json_body);
-                        console.log("Podcast Index data", data.feed);
+                        if (!isMobileNow) {
+                            console.log("Hive Podping data", custom_json_body);
+                            console.log("Podcast Index data", data.feed);
+                        }
                         const imageUrl = data.feed.artwork;
                         const feedTitle = data.feed.title;
                         const feedLink = data.feed.link; // Extract the link
@@ -237,7 +245,6 @@ Powered by the Hive Blockchain and Podcasting 2.0">
         function checkApi(action = "") {
             fetch(V4V_API + '?get_crypto=false&tiles_podping=true&action=' + action)
                 .then(response => response.json())
-                .then(data => console.log(data))
                 .catch(error => console.log(error));
         }
 
@@ -289,7 +296,9 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                 .replace(/=+$/, ''); // Remove any trailing '='
         }
 
-
+        function isMobile() {
+            return /Mobi|Android/i.test(navigator.userAgent) || (window.innerWidth <= 800 && window.innerHeight <= 600);
+        }
 
         // main loop
         (async function () {
