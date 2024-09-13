@@ -64,10 +64,11 @@ Powered by the Hive Blockchain and Podcasting 2.0">
     </div>
     <script>
         const localDev = false;
-        const V4V_API = localDev && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+        let V4V_API = localDev && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
             ? 'http://localhost:1818/v1'
             : 'https://devapi.v4v.app/v1';
 
+        V4V_API = 'https://devapi.v4v.app/v1/pi/?client_app=podping_tiles&call=';
 
         const V4V_PROXY = V4V_API + '/pi/?client_app=podping_tiles&call=';
 
@@ -82,6 +83,8 @@ Powered by the Hive Blockchain and Podcasting 2.0">
         let blockNumber = 0;
         let custom_json_body = '';
         let startTime = Date.now() - 60000;
+        let b64url = '';
+        let episodesFmLink = '';
         const isMobileNow = isMobile();
         if (isMobileNow) {
             console.log("Mobile device detected");
@@ -162,18 +165,17 @@ Powered by the Hive Blockchain and Podcasting 2.0">
 
                         // Episodes.fm Link with base64url encoded feedUrl
                         // Waiting for implementation of episodes.fm
-                        // const b64url = base64urlEncode(feedUrl);
-                        // console.log(feedUrl);
-                        // console.log(`https://episodes.fm/${b64url}`);
-                        // console.log(`https://episodes.fm/${itunesId}`);
-
+                        b64url = base64urlEncode(feedUrl);
+                        episodesFmLink = `https://episodes.fm/${b64url}`;
 
                         var anchor = document.createElement("a");
-                        if (itunesId) {
-                            anchor.setAttribute('href', `https://episodes.fm/${itunesId}`);
-                        } else {
-                            anchor.setAttribute('href', feedLink); // Set the link
-                        }
+                        anchor.setAttribute('href', episodesFmLink)
+
+                        // if (itunesId) {
+                        //     anchor.setAttribute('href', `https://episodes.fm/${itunesId}`);
+                        // } else {
+                        //     anchor.setAttribute('href', feedLink); // Set the link
+                        // }
 
                         anchor.setAttribute('target', '_blank'); // Open link in a new tab
                         anchor.appendChild(newImg);
