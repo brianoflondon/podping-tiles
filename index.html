@@ -158,21 +158,21 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                         }
                         var newImg = document.createElement("img");
                         newImg.setAttribute('src', imageUrl);
-                        const altText = itunesId ? `${feedTitle} (episodes.fm link)` : feedTitle;
+                        const altText = itunesId ? `${feedTitle} (pod.link link)` : feedTitle;
                         console.log(altText);
                         newImg.setAttribute('alt', altText);
                         newImg.setAttribute('title', feedTitle);
 
-                        // Episodes.fm Link with base64url encoded feedUrl
-                        // Waiting for implementation of episodes.fm
+                        // pod.link Link with base64url encoded feedUrl
+                        // Waiting for implementation of pod.link
                         b64url = base64urlEncode(feedUrl);
-                        episodesFmLink = `https://episodes.fm/${b64url}`;
+                        episodesFmLink = `https://pod.link/${b64url}`;
 
                         var anchor = document.createElement("a");
                         anchor.setAttribute('href', episodesFmLink)
 
                         // if (itunesId) {
-                        //     anchor.setAttribute('href', `https://episodes.fm/${itunesId}`);
+                        //     anchor.setAttribute('href', `https://pod.link/${itunesId}`);
                         // } else {
                         //     anchor.setAttribute('href', feedLink); // Set the link
                         // }
@@ -284,11 +284,11 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             await new Promise(resolve => setTimeout(resolve, delay));
         }
 
-        // Functionality to encode RSS URL to base64url for use with episodes.fm
+        // Functionality to encode RSS URL to base64url for use with pod.link
         const BASE64URL_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
         const PAD_CHAR = '=';
 
-        // Function to encode a string or buffer to base64url needed for episodes.fm
+        // Function to encode a string or buffer to base64url needed for pod.link
         function base64urlEncode(data) {
             let str = (data instanceof Uint8Array) ? String.fromCharCode.apply(null, data) : data;
             let base64 = btoa(str);
