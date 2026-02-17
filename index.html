@@ -67,10 +67,22 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             ? 'http://localhost:1818/v1/pi/?client_app=podping_tiles&call='
             : 'https://devapi.v4v.app/v1/pi/?client_app=podping_tiles&call=';
 
-        // Inline SVG placeholder used when proxy + direct fetch both fail
-        const PLACEHOLDER_IMAGE = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="100%" height="100%" fill="#f2f2f2"/><g transform="translate(80,80)"><rect width="240" height="140" rx="8" fill="#e6e6e6" stroke="#ccc"/><circle cx="120" cy="60" r="36" fill="#ddd" stroke="#bbb"/></g><text x="200" y="320" font-family="sans-serif" font-size="24" fill="#888" text-anchor="middle">No image</text></svg>'
-        );
+        // Generate an inline SVG placeholder that shows the podcast title when artwork isn't available
+        function makePlaceholder(title = 'No image', width = 400, height = 400) {
+            const raw = (title || 'No image').trim().replace(/\s+/g, ' ').slice(0, 40);
+            const esc = raw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const fontSize = (raw.length > 30) ? 18 : 24;
+            const svg = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+                    <rect width="100%" height="100%" fill="#f2f2f2"/>
+                    <g transform="translate(80,80)"><rect width="240" height="140" rx="8" fill="#e6e6e6" stroke="#ccc"/><circle cx="120" cy="60" r="36" fill="#ddd" stroke="#bbb"/></g>
+                    <text x="50%" y="320" font-family="sans-serif" font-size="${fontSize}" fill="#444" text-anchor="middle">${esc}</text>
+                </svg>`;
+            return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+        }
+
+        // default placeholder (used only when no title available)
+        const PLACEHOLDER_IMAGE = makePlaceholder('No image');
 
         var client = new dhive.Client(["https://api.deathwing.me", "https://api.hive.blog", "https://hive-api.arcange.eu", "https://api.openhive.network", "https://techcoderx.com", "https://hive-api.3speak.tv", "https://hiveapi.actifit.io", "https://rpc.mahdiyari.info"]);
 
@@ -253,10 +265,10 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                             }
                         }
 
-                        // 3) Finalize values (use placeholder when artwork unavailable)
-                        const finalImage = (feedInfo && feedInfo.artwork) ? feedInfo.artwork : PLACEHOLDER_IMAGE;
+                        // 3) Finalize values (use placeholder showing the podcast title when artwork unavailable)
                         const finalTitle = (feedInfo && feedInfo.title) ? feedInfo.title : feedUrl;
                         const finalLink = (feedInfo && feedInfo.link) ? feedInfo.link : feedUrl;
+                        const finalImage = (feedInfo && feedInfo.artwork) ? feedInfo.artwork : makePlaceholder(finalTitle);
 
                         // count unique podcasts
                         if (!seenFeeds.has(feedUrl)) {
@@ -269,10 +281,11 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                         newImg.setAttribute('alt', finalTitle);
                         newImg.setAttribute('title', finalTitle);
 
-                        // if image fails to load (CORS/404), fall back to placeholder
+                        // if image fails to load (CORS/404), fall back to a title-based placeholder
                         newImg.onerror = function () {
-                            if (newImg.src !== PLACEHOLDER_IMAGE) {
-                                newImg.src = PLACEHOLDER_IMAGE;
+                            const placeholderForTitle = makePlaceholder(finalTitle);
+                            if (newImg.src !== placeholderForTitle) {
+                                newImg.src = placeholderForTitle;
                             }
                         };
 
