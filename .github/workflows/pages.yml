@@ -24,6 +24,12 @@ jobs:
       # - name: Build
       #   run: npm ci && npm run build
 
+      - name: Upload artifact (v4)
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: './'
+
       - name: Upload Pages artifact
         id: upload-artifact
         uses: actions/upload-pages-artifact@v1
