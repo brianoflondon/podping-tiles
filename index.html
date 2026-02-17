@@ -67,8 +67,29 @@ Powered by the Hive Blockchain and Podcasting 2.0">
             ? 'http://localhost:1818/v1/pi/?client_app=podping_tiles&call='
             : 'https://devapi.v4v.app/v1/pi/?client_app=podping_tiles&call=';
 
+        // Inline SVG placeholder used when proxy + direct fetch both fail
+        const PLACEHOLDER_IMAGE = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400"><rect width="100%" height="100%" fill="#f2f2f2"/><g transform="translate(80,80)"><rect width="240" height="140" rx="8" fill="#e6e6e6" stroke="#ccc"/><circle cx="120" cy="60" r="36" fill="#ddd" stroke="#bbb"/></g><text x="200" y="320" font-family="sans-serif" font-size="24" fill="#888" text-anchor="middle">No image</text></svg>'
+        );
 
         var client = new dhive.Client(["https://api.deathwing.me", "https://api.hive.blog", "https://hive-api.arcange.eu", "https://api.openhive.network", "https://techcoderx.com", "https://hive-api.3speak.tv", "https://hiveapi.actifit.io", "https://rpc.mahdiyari.info"]);
+
+        // checkApi: verify Hive API connectivity and avoid ReferenceError if missing
+        async function checkApi(when = '') {
+            try {
+                const dgp = await client.database.getDynamicGlobalProperties();
+                console.info(`checkApi(${when}) OK — head_block_number=${dgp.head_block_number}`);
+                const el = document.getElementById('blockNumberText');
+                if (el && dgp && dgp.head_block_number) el.innerText = String(dgp.head_block_number);
+                return true;
+            } catch (err) {
+                console.warn(`checkApi(${when}) failed:`, err);
+                const el = document.getElementById('blockNumberText');
+                if (el) el.innerText = 'unavailable';
+                return false;
+            }
+        }
+
         checkApi("startup");
 
         let isPaused = false;
@@ -91,6 +112,43 @@ Powered by the Hive Blockchain and Podcasting 2.0">
         let showRawPodping = true
         const imageContainer = document.createElement('div');
         document.body.appendChild(imageContainer);
+
+        // Track unique feeds seen so we can display `podcastCount`
+        const seenFeeds = new Set();
+
+        // Toggle play/pause for incoming podping processing
+        function togglePlayPause() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('playPauseButton');
+            if (btn) {
+                btn.classList.toggle('paused', isPaused);
+                btn.innerText = isPaused ? '▶' : '||';
+            }
+        }
+
+        // Wait while user has paused the stream
+        async function waitForResume() {
+            while (isPaused) {
+                await new Promise(r => setTimeout(r, 200));
+            }
+        }
+
+        // Show/hide raw podping JSON
+        function toggleRawContent() {
+            showRawPodping = !showRawPodping;
+            const el = document.getElementById('latestPodping');
+            if (el) el.style.display = showRawPodping ? 'block' : 'none';
+            const cb = document.getElementById('showRawContentSwitch');
+            if (cb) cb.checked = showRawPodping;
+        }
+
+        // Update footer counters and running time
+        function updateFooterText() {
+            const podpingEl = document.getElementById('podpingCountText');
+            if (podpingEl) podpingEl.innerText = `Podpings: ${podpingCount} Podcasts: ${podcastCount}`;
+            const runningEl = document.getElementById('runningTime');
+            if (runningEl) runningEl.innerText = formatElapsedTime(Date.now() - startTime);
+        }
 
         const podPingOpsFilter = (op) => {
             if (op.op[0] != 'custom_json' || !op.op[1].id || !op.op[1].id.startsWith('pp_')) {
@@ -138,34 +196,98 @@ Powered by the Hive Blockchain and Podcasting 2.0">
                     await new Promise(resolve => setTimeout(resolve, delay));
 
                     try {
-                        const response = await fetch(V4V_PROXY + proxiedUrl, opts);
-                        if (!response.ok) {
-                            throw new Error(`Response status: ${response.status}`);
+                        // 1) Try the V4V proxy
+                        let feedInfo = null;
+                        try {
+                            const proxyResp = await fetch(V4V_PROXY + proxiedUrl, opts);
+                            if (proxyResp && proxyResp.ok) {
+                                const data = await proxyResp.json();
+                                if (data && data.feed) {
+                                    feedInfo = { artwork: data.feed.artwork, title: data.feed.title, link: data.feed.link };
+                                }
+                            } else {
+                                console.warn('V4V proxy returned', proxyResp && proxyResp.status);
+                            }
+                        } catch (proxyErr) {
+                            console.warn('V4V proxy fetch failed:', proxyErr);
                         }
 
-                        const data = await response.json();
-                        const imageUrl = data.feed.artwork;
-                        const feedTitle = data.feed.title;
-                        const feedLink = data.feed.link; // Extract the link
+                        // 2) If proxy failed or didn't include artwork, try fetching the feed directly and parse XML
+                        if (!feedInfo || !feedInfo.artwork) {
+                            try {
+                                const directResp = await fetch(feedUrl, { method: 'get' });
+                                if (directResp && directResp.ok) {
+                                    const text = await directResp.text();
+                                    const parser = new DOMParser();
+                                    const xml = parser.parseFromString(text, 'application/xml');
 
-                        if (!imageUrl || typeof imageUrl === 'undefined') {
-                            continue;
+                                    const titleNode = xml.querySelector('channel > title') || xml.querySelector('feed > title');
+                                    const linkNode = xml.querySelector('channel > link') || xml.querySelector('feed > link');
+                                    const parsedTitle = titleNode ? titleNode.textContent.trim() : undefined;
+                                    let parsedLink = undefined;
+                                    if (linkNode) {
+                                        parsedLink = linkNode.getAttribute && linkNode.getAttribute('href') ? linkNode.getAttribute('href') : linkNode.textContent.trim();
+                                    }
+
+                                    // artwork: try <itunes:image href="...">, then <channel><image><url>, then media:thumbnail/@url
+                                    let artwork = null;
+                                    const itunesImage = xml.getElementsByTagName('itunes:image')[0];
+                                    if (itunesImage && itunesImage.getAttribute && itunesImage.getAttribute('href')) {
+                                        artwork = itunesImage.getAttribute('href');
+                                    }
+                                    if (!artwork) {
+                                        const channelImageUrl = xml.querySelector('channel > image > url');
+                                        if (channelImageUrl && channelImageUrl.textContent) artwork = channelImageUrl.textContent.trim();
+                                    }
+                                    if (!artwork) {
+                                        const mediaThumb = xml.getElementsByTagName('media:thumbnail')[0] || xml.getElementsByTagName('thumbnail')[0];
+                                        if (mediaThumb && mediaThumb.getAttribute && mediaThumb.getAttribute('url')) artwork = mediaThumb.getAttribute('url');
+                                    }
+
+                                    feedInfo = { artwork: artwork, title: parsedTitle, link: parsedLink };
+                                } else {
+                                    console.warn('Direct feed fetch failed, status:', directResp && directResp.status);
+                                }
+                            } catch (directErr) {
+                                console.warn('Direct feed fetch/parsing failed:', directErr);
+                            }
+                        }
+
+                        // 3) Finalize values (use placeholder when artwork unavailable)
+                        const finalImage = (feedInfo && feedInfo.artwork) ? feedInfo.artwork : PLACEHOLDER_IMAGE;
+                        const finalTitle = (feedInfo && feedInfo.title) ? feedInfo.title : feedUrl;
+                        const finalLink = (feedInfo && feedInfo.link) ? feedInfo.link : feedUrl;
+
+                        // count unique podcasts
+                        if (!seenFeeds.has(feedUrl)) {
+                            seenFeeds.add(feedUrl);
+                            podcastCount++;
                         }
 
                         var newImg = document.createElement("img");
-                        newImg.setAttribute('src', imageUrl);
-                        newImg.setAttribute('alt', feedTitle);
-                        newImg.setAttribute('title', feedTitle);
+                        newImg.setAttribute('src', finalImage);
+                        newImg.setAttribute('alt', finalTitle);
+                        newImg.setAttribute('title', finalTitle);
+
+                        // if image fails to load (CORS/404), fall back to placeholder
+                        newImg.onerror = function () {
+                            if (newImg.src !== PLACEHOLDER_IMAGE) {
+                                newImg.src = PLACEHOLDER_IMAGE;
+                            }
+                        };
 
                         var anchor = document.createElement("a");
-                        anchor.setAttribute('href', feedLink); // Set the link
+                        anchor.setAttribute('href', finalLink); // Set the link
                         anchor.setAttribute('target', '_blank'); // Open link in a new tab
                         anchor.appendChild(newImg);
 
                         document.body.insertBefore(anchor, document.body.firstChild);
 
+                        // update footer counters after adding a new element
+                        updateFooterText();
+
                     } catch (error) {
-                        console.error('Fetch error:', error);
+                        console.error('Unexpected error while resolving feed artwork:', error);
                     }
                 }
 
